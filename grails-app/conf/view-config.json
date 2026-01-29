@@ -230,7 +230,13 @@
     "input": {
       "name": {
         "constraints": {
-          "default": "my merged area"
+          "default": "my merged area",
+          "min": 1
+        }
+      },
+      "description": {
+        "constraints": {
+          "min": 1
         }
       }
     }

@@ -171,6 +171,15 @@
                     }
                 }
 
+                // Helper function to get default value from constraints
+                // Supports both 'default' (view-config.json) and 'defaultValue' (spatial-service) keys
+                var getDefaultValue = function(constraints) {
+                    if (constraints === undefined) return undefined;
+                    if (constraints['defaultValue'] !== undefined) return constraints['defaultValue'];
+                    if (constraints['default'] !== undefined) return constraints['default'];
+                    return undefined;
+                };
+
                 $scope.initValues = function () {
                     //no need for initValues when $scope.values is populated from LayoutService.addToSave
                     if ($scope.values.length > 0) return;
@@ -205,17 +214,18 @@
                             value = c[k];
                             if (value.constraints === undefined) value.constraints = {};
                             var v;
+                            var defaultVal = getDefaultValue(value.constraints);
                             if (value.type === 'area') {
                                 if (value.constraints['defaultAreas'] === undefined) value.constraints['defaultAreas'] = true;
                                 if (value.constraints['defaultToWorld'] === undefined) value.constraints['defaultToWorld'] = true;
                                 if (value.constraints['max'] === undefined) value.constraints['max'] = 1000;
 
-                                if (value.constraints['defaultValue'] !== undefined) {
+                                if (defaultVal !== undefined) {
                                     // getInputs returns the .area array which is inconsistent with the value
-                                    if (value.constraints['defaultValue'] instanceof Array) {
-                                        v = {area: value.constraints['defaultValue']}
+                                    if (defaultVal instanceof Array) {
+                                        v = {area: defaultVal}
                                     } else {
-                                        v = value.constraints['defaultValue']
+                                        v = defaultVal
                                     }
                                 } else {
                                     v = {area: []}
@@ -233,7 +243,7 @@
                                 if (value.constraints['searchSpecies'] === undefined) value.constraints['searchSpecies'] = true;
                                 if (value.constraints['allSpecies'] === undefined) value.constraints['allSpecies'] = true;
 
-                                if (value.constraints['defaultValue'] !== undefined) v = value.constraints['defaultValue'];
+                                if (defaultVal !== undefined) v = defaultVal;
                                 else if (value.constraints['speciesOption'] === 'allSpecies') {
                                     //specify allSpecies default
                                     v = {
@@ -252,47 +262,47 @@
                             } else if (value.type === 'date') {
                                 v = {fq: []}
                             } else if (value.type === 'layer') {
-                                if (value.constraints['defaultValue'] !== undefined) {
+                                if (defaultVal !== undefined) {
                                     // getInputs returns the .area array which is inconsistent with the value
-                                    if (value.constraints['defaultValue'] instanceof Array) {
+                                    if (defaultVal instanceof Array) {
                                         v = {layers: []};
-                                        $.map(value.constraints['defaultValue'], function (layer) {
+                                        $.map(defaultVal, function (layer) {
                                             v.layers.push(LayersService.getLayer(layer))
                                         })
                                     } else {
-                                        v = LayersService.getLayer(value.constraints['defaultValue']);
+                                        v = LayersService.getLayer(defaultVal);
                                     }
                                 }
                                 else v = {layers: []}
                             } else if (value.type === 'boolean') {
-                                v = value.constraints['defaultValue']
+                                v = defaultVal
                             } else if (value.type === 'int') {
-                                v = value.constraints['defaultValue']
+                                v = defaultVal
                             } else if (value.type === 'double') {
-                                v = value.constraints['defaultValue']
+                                v = defaultVal
                             } else if (value.type === 'list') {
                                 if (value.constraints.selection !== 'single') {
-                                    v = value.constraints['defaultValue'];
+                                    v = defaultVal;
                                     if (v == undefined) {
                                         v = [];
                                     }
                                 } else {
-                                    v = value.constraints['defaultValue'];
+                                    v = defaultVal;
                                 }
-                            } else if (value.type === 'text') {
-                                v = value.constraints['defaultValue']
+                            } else if (value.type === 'text' || value.type === 'string') {
+                                v = defaultVal
                             } else if (value.type === 'speciesOptions') {
                                 if (value.constraints['areaIncludes'] === undefined) value.constraints['areaIncludes'] = false;
                                 if (value.constraints['kosherIncludes'] === undefined) value.constraints['kosherIncludes'] = true;
                                 if (value.constraints['endemicIncludes'] === undefined) value.constraints['endemicIncludes'] = false;
 
-                                if (value.constraints['defaultValue'] !== undefined) v = value.constraints['defaultValue'];
+                                if (defaultVal !== undefined) v = defaultVal;
                                 else v = {}
                             } else if (value.type === 'facet') {
-                                if (value.constraints['defaultValue'] !== undefined) v = value.constraints['defaultValue'];
+                                if (defaultVal !== undefined) v = defaultVal;
                                 else v = []
-                            } else if (value.constraints !== undefined && value.constraints['defaultValue'] !== undefined) {
-                                v = value.constraints['defaultValue']
+                            } else if (defaultVal !== undefined) {
+                                v = defaultVal
                             } else {
                                 v = null
                             }
@@ -347,8 +357,20 @@
                         return $scope.values[i] === undefined
                     } else if (value.type === 'list' && value.constraints.selection !== 'single') {
                         return $scope.values[i].length === 0
-                    } else if (value.type === 'text') {
-                        return $scope.values[i] < value.constraints.min || $scope.values[i] > value.constraints.max
+                    } else if (value.type === 'text' || value.type === 'string') {
+                        // Check if text/string is empty or doesn't meet length constraints
+                        var textValue = $scope.values[i] || '';
+                        if (value.constraints.min !== undefined && textValue.length < value.constraints.min) {
+                            return true;
+                        }
+                        if (value.constraints.max !== undefined && textValue.length > value.constraints.max) {
+                            return true;
+                        }
+                        // If no min constraint specified, treat as required (must not be empty)
+                        if (value.constraints.min === undefined && textValue.trim().length === 0) {
+                            return true;
+                        }
+                        return false;
                     } else if (value.type === 'speciesOptions') {
                         return false
                     } else if (value.type === 'facet') {

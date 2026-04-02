@@ -1,37 +1,41 @@
 (function (angular) {
-    'use strict';
-    /**
-     * @memberof spApp
-     * @ngdoc service
-     * @name SpeciesAutoCompleteService
-     * @description
-     *   List species
-     */
-    angular.module('species-auto-complete-service', [])
-        .factory("SpeciesAutoCompleteService", ["$http", "$rootScope", function ($http, $rootScope) {
-            var lastUrl = '';
+  "use strict";
+  /**
+   * @memberof spApp
+   * @ngdoc service
+   * @name SpeciesAutoCompleteService
+   * @description
+   *   List species
+   */
+  angular
+    .module("species-auto-complete-service", [])
+    .factory("SpeciesAutoCompleteService", [
+      "$http",
+      "$rootScope",
+      function ($http, $rootScope) {
+        var lastUrl = "";
 
-            var _httpDescription = function (method, httpconfig) {
-                if (httpconfig === undefined) {
-                    httpconfig = {};
-                }
-                httpconfig.service = 'SpeciesAutoCompleteService';
-                httpconfig.method = method;
+        var _httpDescription = function (method, httpconfig) {
+          if (httpconfig === undefined) {
+            httpconfig = {};
+          }
+          httpconfig.service = "SpeciesAutoCompleteService";
+          httpconfig.method = method;
 
-                return httpconfig;
-            };
+          return httpconfig;
+        };
 
-            var finishLoading = function (a, data) {
-                if (data.url === lastUrl) {
-                    //hide all species spinners
-                    $('.species-spinner').removeClass('species-spinner')
-                }
-            };
+        var finishLoading = function (a, data) {
+          if (data.url === lastUrl) {
+            //hide all species spinners
+            $(".species-spinner").removeClass("species-spinner");
+          }
+        };
 
-            $rootScope.$on("cfpLoadingBar:loaded", finishLoading);
+        $rootScope.$on("cfpLoadingBar:loaded", finishLoading);
 
-            return {
-                /**
+        return {
+          /**
                  * Search for species
                  * @memberof SpeciesAutoCompleteService
                  * @param {String} search term
@@ -82,21 +86,25 @@
                         },
 
                  */
-                search: function (term, spinner) {
-                    //show only this species spinner
-                    spinner.addClass('species-spinner');
+          search: function (term, spinner) {
+            //show only this species spinner
+            spinner.addClass("species-spinner");
 
-                    const url = $SH.bieServiceUrl + "/search?q="
-                        + encodeURIComponent(`*"${term}"*`)
-                        + "&fq=" + encodeURIComponent("idxtype:TAXON")
-                        + "&fq=" + encodeURIComponent("occurrenceCount:[1 TO *]")
-                        + "&pageSize=10&sort=score&dir=desc";
-                    lastUrl = url;
+            const url =
+              $SH.bieServiceUrl +
+              "/search?q=" +
+              encodeURIComponent(`*${term}*`) +
+              "&fq=!occurrenceCount:0" +
+              "&pageSize=10&sort=score&dir=desc";
+            lastUrl = url;
 
-                    return $http.get(url, _httpDescription('search')).then(function (response) {
-                        return response.data;
-                    });
-                }
-            };
-        }])
-}(angular));
+            return $http
+              .get(url, _httpDescription("search"))
+              .then(function (response) {
+                return response.data;
+              });
+          },
+        };
+      },
+    ]);
+})(angular);

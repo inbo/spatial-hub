@@ -41,14 +41,16 @@
                           (item.rank || "") +
                           (item.commonNameSingle
                             ? " " + item.commonNameSingle
-                            : " ") +
+                            : item.idxtype == "COMMON"
+                              ? item.name || ""
+                              : "") +
                           (item.occurrenceCount
                             ? " - " +
                               item.occurrenceCount +
                               " " +
                               $i18n(396, "found")
                             : ""),
-                        value: item
+                        value: item,
                       };
                     })
                   );

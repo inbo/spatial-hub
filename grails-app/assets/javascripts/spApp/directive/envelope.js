@@ -118,7 +118,7 @@
                         };
 
                         scope.getSldBody = function (name, min, max) {
-                            var sldBody = '<?xml version="1.0" encoding="UTF-8"?><StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld"><NamedLayer><Name>ALA:.name.</Name><UserStyle><FeatureTypeStyle><Rule><RasterSymbolizer><ColorMap><ColorMapEntry color="0x0000FF" opacity="1" quantity=".min0."/><ColorMapEntry color="0x0000FF" opacity="0" quantity=".min1."/><ColorMapEntry color="0x0000FF" opacity="0" quantity=".max0."/><ColorMapEntry color="0x0000FF" opacity="1" quantity=".max1."/></ColorMap></RasterSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>';
+                            var sldBody = '<?xml version="1.0" encoding="UTF-8"?><StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld"><NamedLayer><Name>ALA:.name.</Name><UserStyle><FeatureTypeStyle><Rule><RasterSymbolizer><ColorMap><ColorMapEntry color="0x0000FF" opacity="0" quantity=".min0."/><ColorMapEntry color="0x0000FF" opacity="1" quantity=".min1."/><ColorMapEntry color="0x0000FF" opacity="1" quantity=".max0."/><ColorMapEntry color="0x0000FF" opacity="0" quantity=".max1."/></ColorMap></RasterSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>';
                             sldBody = sldBody.replace('.name.', name);
                             sldBody = sldBody.replace('.min0.', 1 * min - 0.0000002).replace('.min1.', 1 * min - 0.0000001);
                             sldBody = sldBody.replace('.max0.', 1 * max + 0.0000001).replace('.max1.', 1 * max + 0.0000002);

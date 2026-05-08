@@ -9,13 +9,14 @@
    */
   angular.module("lifeform-select-directive", []).directive("lifeformSelect", [
     "BiocacheService",
-    function (biocacheService) {
+    "i18nService",
+    function (biocacheService, i18nService) {
       return {
         scope: {
           _custom: "&onCustom",
         },
         template:
-          "<select ng-model='selectedItem' ng-change='selectItem(selectedItem)'><option ng-repeat='x in list' value='{{x.query}}' i18n>{{x.label}}</option></select>",
+          "<select ng-model='selectedItem' ng-change='selectItem(selectedItem)'><option ng-repeat='x in list' value='{{x.query}}'>{{x.label}}</option></select>",
         link: function (scope, element, attrs) {
           scope.list = [];
           scope.selectItem = function (selectedItem) {
@@ -26,8 +27,8 @@
             .facetGeneral("species_group", biocacheService.newQuery(), -1, 0)
             .then(function (data) {
               $.each(data[0].fieldResult, function (idx, item) {
-                console.log(item);
                 item.query = biocacheService.newQuery([item.fq], item.label);
+                item.label = i18nService.v(item.label) || item.label;
                 scope.list.push(item);
               });
             });

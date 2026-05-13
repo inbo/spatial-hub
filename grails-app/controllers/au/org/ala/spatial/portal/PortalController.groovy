@@ -534,8 +534,9 @@ class PortalController {
      */
     def proxy() {
         def userId = getValidUserId(params)
+        def allowAnonymous = Holders.config.security.oidc.allowAnonymousProxy ?: false
 
-        if (!userId) {
+        if (!userId && !allowAnonymous) {
             notAuthorised()
         } else if (!portalService.canProxy(params.url)) {
             response.setStatus(HttpURLConnection.HTTP_UNAUTHORIZED)

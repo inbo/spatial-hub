@@ -36,7 +36,8 @@
                 $scope.getMapExamples = $SH.getMapExamples;
 
                 $scope.getCapabilities = function () {
-                    var url = $scope.selectedServer + ($scope.version ? "&version=" + $scope.version : "");
+                    var sep = $scope.selectedServer.indexOf('?') >= 0 ? '&' : '?';
+                    var url = $scope.selectedServer + sep + 'service=WMS&request=GetCapabilities' + ($scope.version ? "&version=" + $scope.version : "");
                     $scope.warning = '';
                     $scope.loading = true;
 
@@ -47,53 +48,57 @@
                             $scope.availableLayers = [];
                             var x2js = new X2JS({attributePrefix: []});
                             var xml = x2js.xml_str2json(resp);
-                            var version = xml.WMS_Capabilities._version;
-                            var layers = xml.WMS_Capabilities.Capability.Layer.Layer;
 
-                            for (var i in layers) {
-                                if (layers[i].Style !== undefined && layers[i].Style.LegendURL !== undefined) {
-                                    var styles = layers[i].Style;
-                                    var legendurl = '';
-                                    if (Array.isArray(styles)) {
-                                        legendurl = styles[0].LegendURL.OnlineResource['xlink:href'];
-                                    } else {
-                                        legendurl = styles.LegendURL.OnlineResource['xlink:href'];
-                                    }
+                            if (!xml || !xml.WMS_Capabilities) {
+                                var errMsg = 'Unexpected response from WMS server (no WMS_Capabilities found)';
+                                if (xml && xml.ServiceExceptionReport && xml.ServiceExceptionReport.ServiceException) {
+                                    errMsg = String(
+                                        xml.ServiceExceptionReport.ServiceException.__text ||
+                                        xml.ServiceExceptionReport.ServiceException._code ||
+                                        errMsg
+                                    );
+                                }
+                                $scope.warning = errMsg;
+                                return;
+                            }
 
-                                    legendurl = $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent(legendurl)
+                            var version = xml.WMS_Capabilities.version || xml.WMS_Capabilities._version;
 
-                                    $scope.availableLayers.push({
-                                        displayname: layers[i].Name,
-                                        name: layers[i].Name,
-                                        title: layers[i].Title,
-                                        version: version,
-                                        legendurl: legendurl
-                                    })
-                                } else if (layers[i].Layer !== undefined && layers[i].Layer instanceof Array) {
-                                    for (var k in layers[i].Layer) {
-                                        if (layers[i].Layer[k].Style !== undefined && layers[i].Layer[k].Style.LegendURL !== undefined) {
-                                            var styles = layers[i].Layer[k].Style;
-                                            var legendurl = '';
-                                            if (Array.isArray(styles)) {
-                                                legendurl = styles[0].LegendURL.OnlineResource['xlink:href'];
-                                            } else {
-                                                legendurl = styles.LegendURL.OnlineResource['xlink:href'];
-                                            }
+                            function getLegendUrl(lyr) {
+                                if (!lyr || !lyr.Style) return '';
+                                var styles = lyr.Style;
+                                var firstStyle = Array.isArray(styles) ? styles[0] : styles;
+                                if (!firstStyle || !firstStyle.LegendURL || !firstStyle.LegendURL.OnlineResource) return '';
+                                var res = firstStyle.LegendURL.OnlineResource['xlink:href'] || firstStyle.LegendURL.OnlineResource.href || '';
+                                if (!res) return '';
+                                return $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(res);
+                            }
 
-                                            legendurl = $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent(legendurl)
-
+                            function findLayers(node) {
+                                if (!node) return;
+                                if (node.Layer) {
+                                    var children = Array.isArray(node.Layer) ? node.Layer : [node.Layer];
+                                    for (var i = 0; i < children.length; i++) {
+                                        var lyr = children[i];
+                                        if (lyr.Name) {
+                                            var name = typeof lyr.Name === 'string' ? lyr.Name : (lyr.Name.__text || lyr.Name.toString());
+                                            var title = typeof lyr.Title === 'string' ? lyr.Title : (lyr.Title ? (lyr.Title.__text || lyr.Title.toString()) : name);
                                             $scope.availableLayers.push({
-                                                displayname: layers[i].Layer[k].Name,
-                                                name: layers[i].Layer[k].Name,
-                                                title: layers[i].Layer[k].Title,
+                                                displayname: title,
+                                                name: name,
+                                                title: title,
                                                 version: version,
-                                                legendurl: legendurl
-                                            })
+                                                legendurl: getLegendUrl(lyr)
+                                            });
                                         }
+                                        findLayers(lyr); // Recurse
                                     }
                                 }
                             }
 
+                            if (xml.WMS_Capabilities.Capability) {
+                                findLayers(xml.WMS_Capabilities.Capability);
+                            }
                         })
                         .error(function (resp) {
                             if (resp.error) {
@@ -112,7 +117,7 @@
 
                 $scope.addLayer = function () {
                     var len = $scope.selectedServer.lastIndexOf('?')
-                    if (len < 0) len = $scope.selectedServer.length()
+                    if (len < 0) len = $scope.selectedServer.length
                     var serverUrl = $scope.selectedServer.substr(0, len);
                     var proxyUrl = $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent(serverUrl);
                     var layer = Object.assign({url: proxyUrl, layertype: "wms"}, $scope.selectedLayer);
@@ -165,7 +170,7 @@
                     }
 
                     var layer = {
-                        url: result.URL,
+                        url: $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent(result.URL),
                         type: 'wms',
                         layertype: 'wms',
                         version: result.VERSION,

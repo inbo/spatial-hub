@@ -82,14 +82,26 @@
                                         var lyr = children[i];
                                         if (lyr.Name) {
                                             var name = typeof lyr.Name === 'string' ? lyr.Name : (lyr.Name.__text || lyr.Name.toString());
-                                            var title = typeof lyr.Title === 'string' ? lyr.Title : (lyr.Title ? (lyr.Title.__text || lyr.Title.toString()) : name);
-                                            $scope.availableLayers.push({
-                                                displayname: title,
-                                                name: name,
-                                                title: title,
-                                                version: version,
-                                                legendurl: getLegendUrl(lyr)
-                                            });
+                                            
+                                            // Prevent duplicates
+                                            var exists = false;
+                                            for (var j=0; j<$scope.availableLayers.length; j++) {
+                                                if ($scope.availableLayers[j].name === name) {
+                                                    exists = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (!exists) {
+                                                var title = typeof lyr.Title === 'string' ? lyr.Title : (lyr.Title ? (lyr.Title.__text || lyr.Title.toString()) : name);
+                                                $scope.availableLayers.push({
+                                                    displayname: title,
+                                                    name: name,
+                                                    title: title,
+                                                    version: version,
+                                                    legendurl: getLegendUrl(lyr)
+                                                });
+                                            }
                                         }
                                         findLayers(lyr); // Recurse
                                     }

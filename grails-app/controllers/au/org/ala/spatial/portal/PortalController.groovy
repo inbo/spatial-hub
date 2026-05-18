@@ -559,14 +559,18 @@ class PortalController {
             if (request.method == HttpGet.METHOD_NAME) {
                 def value = grailsCacheManager.getCache(portalService.caches.PROXY).get(target)
                 if (value) {
-                    response.setContentType((String) ((Map) value.get()).contentType)
-                    ((Map) value.get()).headers.each { k, v ->
+                    def mapValue = (Map) value.get()
+                    if (mapValue.statusCode) {
+                        response.setStatus((int) mapValue.statusCode)
+                    }
+                    response.setContentType((String) mapValue.contentType)
+                    mapValue.headers.each { k, v ->
                         response.setHeader(k, v)
                     }
-                    if (((Map) value.get()).contentType.startsWith("image")) {
-                        response.outputStream << ((Map) value.get()).text
+                    if (mapValue.contentType.startsWith("image")) {
+                        response.outputStream << mapValue.text
                     } else {
-                        response.outputStream << new String(((Map) value.get()).text)
+                        response.outputStream << new String(mapValue.text)
                     }
                 } else {
                     def headers = [:]
@@ -575,6 +579,9 @@ class PortalController {
                     value = hubWebService.getUrlMap(target, headers)
                     if (value) {
                         grailsCacheManager.getCache(portalService.caches.PROXY).put(target, value)
+                        if (value.statusCode) {
+                            response.setStatus((int) value.statusCode)
+                        }
                         response.setContentType(String.valueOf(value.contentType))
                         if (value.contentType.startsWith("image")) {
                             response.outputStream << value.text

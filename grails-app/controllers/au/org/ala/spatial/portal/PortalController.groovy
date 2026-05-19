@@ -578,7 +578,9 @@ class PortalController {
 
                     value = hubWebService.getUrlMap(target, headers)
                     if (value) {
-                        grailsCacheManager.getCache(portalService.caches.PROXY).put(target, value)
+                        if (value.statusCode == 200) {
+                            grailsCacheManager.getCache(portalService.caches.PROXY).put(target, value)
+                        }
                         if (value.statusCode) {
                             response.setStatus((int) value.statusCode)
                         }

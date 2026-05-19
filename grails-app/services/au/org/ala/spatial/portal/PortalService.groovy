@@ -98,7 +98,7 @@ class PortalService {
         def proxies = Holders.config.allowProxy.server? Holders.config.allowProxy.server.split(";|,"):[];
         //def proxies = (Holders.config.allowProxy as grails.converters.JSON).toString().encodeAsRaw()
         def patterns = []
-        def mode = '^(https:|http:)\\/\\/SERVER(\\/.*|$)'
+        def mode = '^(https:|http:)\\/\\/SERVER(:[0-9]+)?(\\/.*|$)'
         for( proxy in proxies){
             patterns.add(mode.replace('SERVER', proxy.replace('.', '\\.')))
         }

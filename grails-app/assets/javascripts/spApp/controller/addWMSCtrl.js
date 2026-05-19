@@ -132,7 +132,7 @@
 
                                 var res = onlineResource['xlink:href'] || onlineResource.href || onlineResource['href'] || '';
                                 if (!res) return '';
-                                res = safeDecode(res);
+                                res = safeDecode(res).replace(':4443/', '/');
                                 return $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(res);
                             }
 

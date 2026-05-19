@@ -252,7 +252,7 @@ class HubWebService {
                         call.addRequestHeader(String.valueOf(k), String.valueOf(v))
                     }
                     */
-                    if (k != null && !HttpHeaders.COOKIE.equalsIgnoreCase(k.toString())) {
+                    if (k != null && !HttpHeaders.COOKIE.equalsIgnoreCase(k.toString()) && !'host'.equalsIgnoreCase(k.toString())) {
                         call.setRequestHeader(String.valueOf(k), String.valueOf(v))
                     }
                 }

@@ -47,14 +47,56 @@
                         .success(function (resp) {
                             $scope.availableLayers = [];
                             var x2js = new X2JS({attributePrefix: []});
-                            var xml = x2js.xml_str2json(resp);
+                            var cleanXmlStr = resp;
+                            if (typeof resp === 'string') {
+                                var startIdx = resp.indexOf('<');
+                                if (startIdx > -1) {
+                                    cleanXmlStr = resp.substring(startIdx).trim();
+                                } else {
+                                    cleanXmlStr = resp.trim();
+                                }
+                            }
+                            var xmlRaw = x2js.xml_str2json(cleanXmlStr);
 
-                            if (!xml || !xml.WMS_Capabilities) {
+                            function stripNamespaces(obj) {
+                                if (obj === null || typeof obj !== 'object') {
+                                    return obj;
+                                }
+                                if (Array.isArray(obj)) {
+                                    return obj.map(stripNamespaces);
+                                }
+                                var cleaned = {};
+                                for (var key in obj) {
+                                    if (obj.hasOwnProperty(key)) {
+                                        var newKey = key;
+                                        var colonIdx = key.indexOf(':');
+                                        if (colonIdx > -1) {
+                                            newKey = key.substring(colonIdx + 1);
+                                        }
+                                        cleaned[newKey] = stripNamespaces(obj[key]);
+                                    }
+                                }
+                                return cleaned;
+                            }
+
+                            var xml = stripNamespaces(xmlRaw);
+
+                            var capabilitiesKey = Object.keys(xml || {}).find(function (key) {
+                                var k = key.toLowerCase();
+                                return k === 'wms_capabilities' || k === 'wmt_ms_capabilities';
+                            });
+                            var capabilities = capabilitiesKey ? xml[capabilitiesKey] : null;
+
+                            if (!capabilities) {
                                 var errMsg = 'Unexpected response from WMS server (no WMS_Capabilities found)';
-                                if (xml && xml.ServiceExceptionReport && xml.ServiceExceptionReport.ServiceException) {
+                                var exceptionKey = Object.keys(xml || {}).find(function (key) {
+                                    return key.toLowerCase() === 'serviceexceptionreport';
+                                });
+                                var exceptionReport = exceptionKey ? xml[exceptionKey] : null;
+                                if (exceptionReport && exceptionReport.ServiceException) {
                                     errMsg = String(
-                                        xml.ServiceExceptionReport.ServiceException.__text ||
-                                        xml.ServiceExceptionReport.ServiceException._code ||
+                                        exceptionReport.ServiceException.__text ||
+                                        exceptionReport.ServiceException._code ||
                                         errMsg
                                     );
                                 }
@@ -62,30 +104,55 @@
                                 return;
                             }
 
-                            var version = xml.WMS_Capabilities.version || xml.WMS_Capabilities._version;
+                            var version = capabilities.version || capabilities._version || capabilities.Version || capabilities._Version || "";
+
+                            function safeDecode(str) {
+                                try {
+                                    return decodeURIComponent(str);
+                                } catch (e) {
+                                    return str;
+                                }
+                            }
 
                             function getLegendUrl(lyr) {
-                                if (!lyr || !lyr.Style) return '';
-                                var styles = lyr.Style;
+                                if (!lyr) return '';
+                                var styleKey = Object.keys(lyr).find(function (k) { return k.toLowerCase() === 'style'; });
+                                if (!styleKey) return '';
+                                var styles = lyr[styleKey];
                                 var firstStyle = Array.isArray(styles) ? styles[0] : styles;
-                                if (!firstStyle || !firstStyle.LegendURL || !firstStyle.LegendURL.OnlineResource) return '';
-                                var res = firstStyle.LegendURL.OnlineResource['xlink:href'] || firstStyle.LegendURL.OnlineResource.href || '';
+                                if (!firstStyle) return '';
+
+                                var legendUrlKey = Object.keys(firstStyle).find(function (k) { return k.toLowerCase() === 'legendurl'; });
+                                if (!legendUrlKey) return '';
+                                var legendUrl = firstStyle[legendUrlKey];
+
+                                var onlineResourceKey = Object.keys(legendUrl).find(function (k) { return k.toLowerCase() === 'onlineresource'; });
+                                if (!onlineResourceKey) return '';
+                                var onlineResource = legendUrl[onlineResourceKey];
+
+                                var res = onlineResource['xlink:href'] || onlineResource.href || onlineResource['href'] || '';
                                 if (!res) return '';
+                                res = safeDecode(res);
                                 return $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(res);
                             }
 
                             function findLayers(node) {
                                 if (!node) return;
-                                if (node.Layer) {
-                                    var children = Array.isArray(node.Layer) ? node.Layer : [node.Layer];
+
+                                var layerKey = Object.keys(node).find(function (k) { return k.toLowerCase() === 'layer'; });
+                                if (layerKey) {
+                                    var children = Array.isArray(node[layerKey]) ? node[layerKey] : [node[layerKey]];
                                     for (var i = 0; i < children.length; i++) {
                                         var lyr = children[i];
-                                        if (lyr.Name) {
-                                            var name = typeof lyr.Name === 'string' ? lyr.Name : (lyr.Name.__text || lyr.Name.toString());
-                                            
+
+                                        var nameKey = Object.keys(lyr).find(function (k) { return k.toLowerCase() === 'name'; });
+                                        if (nameKey) {
+                                            var nameVal = lyr[nameKey];
+                                            var name = typeof nameVal === 'string' ? nameVal : (nameVal.__text || nameVal.toString());
+
                                             // Prevent duplicates
                                             var exists = false;
-                                            for (var j=0; j<$scope.availableLayers.length; j++) {
+                                            for (var j = 0; j < $scope.availableLayers.length; j++) {
                                                 if ($scope.availableLayers[j].name === name) {
                                                     exists = true;
                                                     break;
@@ -93,7 +160,13 @@
                                             }
 
                                             if (!exists) {
-                                                var title = typeof lyr.Title === 'string' ? lyr.Title : (lyr.Title ? (lyr.Title.__text || lyr.Title.toString()) : name);
+                                                var titleKey = Object.keys(lyr).find(function (k) { return k.toLowerCase() === 'title'; });
+                                                var title = name;
+                                                if (titleKey) {
+                                                    var titleVal = lyr[titleKey];
+                                                    title = typeof titleVal === 'string' ? titleVal : (titleVal ? (titleVal.__text || titleVal.toString()) : name);
+                                                }
+
                                                 $scope.availableLayers.push({
                                                     displayname: title,
                                                     name: name,
@@ -108,8 +181,13 @@
                                 }
                             }
 
-                            if (xml.WMS_Capabilities.Capability) {
-                                findLayers(xml.WMS_Capabilities.Capability);
+                            var capabilityKey = Object.keys(capabilities).find(function (key) {
+                                return key.toLowerCase() === 'capability';
+                            });
+                            var capability = capabilityKey ? capabilities[capabilityKey] : null;
+
+                            if (capability) {
+                                findLayers(capability);
                             }
                         })
                         .error(function (resp) {
@@ -135,7 +213,7 @@
                     var layer = Object.assign({url: proxyUrl, layertype: "wms"}, $scope.selectedLayer);
 
                     MapService.add(layer).then(function (data) {
-                        //layer added successfully
+                        $scope.$close();
                     }).catch(function (err) {
                         $scope.warning = err;
                     })

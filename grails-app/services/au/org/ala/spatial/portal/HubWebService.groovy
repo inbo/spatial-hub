@@ -245,14 +245,13 @@ class HubWebService {
             }
 
             if (headers) {
+                def ignoredHeaders = [
+                    'host', 'authorization', 'cookie', 'cookie2',
+                    'connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization',
+                    'te', 'trailers', 'transfer-encoding', 'upgrade'
+                ] as Set
                 headers.each { k, v ->
-                    /*
-                    //Why excludes default headers, like Accept
-                    if (k != null && !excludedHeaders.contains(k.toString().toLowerCase()) && !HttpHeaders.COOKIE.equalsIgnoreCase(k.toString())) {
-                        call.addRequestHeader(String.valueOf(k), String.valueOf(v))
-                    }
-                    */
-                    if (k != null && !HttpHeaders.COOKIE.equalsIgnoreCase(k.toString()) && !'host'.equalsIgnoreCase(k.toString())) {
+                    if (k != null && !ignoredHeaders.contains(k.toString().toLowerCase())) {
                         call.setRequestHeader(String.valueOf(k), String.valueOf(v))
                     }
                 }

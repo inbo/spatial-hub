@@ -435,7 +435,7 @@ presetWMSServers:
       url: "http://geofabric.bom.gov.au/simplefeatures/ows?service=WMS&request=GetCapabilities"
 
 allowProxy:
-    server: 'data.auscover.org.au,data.auscover.org.au:80,geoserver.imos.org.au,www.ga.gov.au/gis,geofabric.bom.gov.au,doi.ala.org.au,doi-test.ala.org.au,ga.gov.au,aodn.org.au'
+    server: 'data.auscover.org.au,data.auscover.org.au:80,geoserver.imos.org.au,www.ga.gov.au/gis,geofabric.bom.gov.au,doi.ala.org.au,doi-test.ala.org.au,ga.gov.au,aodn.org.au,geo.api.vlaanderen.be'
 
 getMapExamples:
     - name: "Fractional Cover CLW - Non-PS Veg - 2012.297"

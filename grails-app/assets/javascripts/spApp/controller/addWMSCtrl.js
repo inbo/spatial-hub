@@ -239,7 +239,6 @@
                     $scope.warning = err;
                 });
             };
-                };
 
                 $scope.addLayerFromGetMapRequest = function () {
                     //parsing

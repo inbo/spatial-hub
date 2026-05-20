@@ -46,7 +46,7 @@
                     $http.get(urlFinal, $scope._httpDescription('proxyGetCapabilities'))
                         .success(function (resp) {
                             $scope.availableLayers = [];
-                            var x2js = new X2JS({attributePrefix: []});
+                            var x2js = new X2JS({ attributePrefix: [] });
                             var cleanXmlStr = resp;
                             if (typeof resp === 'string') {
                                 var startIdx = resp.indexOf('<');
@@ -205,25 +205,15 @@
                 };
 
 
-                            $scope.addLayer = function () {
-                // Remove any query string from the server URL
+                // Build a clean base WMS endpoint (no GetMap query). Leaflet will add the required parameters (layers, CRS, BBOX, etc.)
                 var baseUrl = $scope.selectedServer;
                 var qPos = baseUrl.indexOf('?');
                 if (qPos >= 0) baseUrl = baseUrl.substring(0, qPos);
 
-                // Build a proper WMS GetMap request (EPSG:3857 is a safe default)
-                var getMapUrl = baseUrl +
-                    (baseUrl.indexOf('?') >= 0 ? '&' : '?') +
-                    'service=WMS&request=GetMap' +
-                    '&layers=' + encodeURIComponent($scope.selectedLayer.name) +
-                    '&crs=EPSG:3857' +
-                    '&format=image%2Fpng' +
-                    '&transparent=true';
+                // Proxy the base URL – no GetMap query attached
+                var proxyUrl = $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(baseUrl);
 
-                // Proxy the final URL
-                var proxyUrl = $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(getMapUrl);
-
-                // Create the layer object expected by MapService
+                // Create the layer object expected by MapService. Leaflet will turn this into tiled WMS requests.
                 var layer = {
                     url: proxyUrl,
                     layertype: 'wms',
@@ -238,7 +228,6 @@
                 }).catch(function (err) {
                     $scope.warning = err;
                 });
-            };
 
                 $scope.addLayerFromGetMapRequest = function () {
                     //parsing

@@ -205,18 +205,40 @@
                 };
 
 
-                $scope.addLayer = function () {
-                    var len = $scope.selectedServer.lastIndexOf('?')
-                    if (len < 0) len = $scope.selectedServer.length
-                    var serverUrl = $scope.selectedServer.substr(0, len);
-                    var proxyUrl = $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent(serverUrl);
-                    var layer = Object.assign({url: proxyUrl, layertype: "wms"}, $scope.selectedLayer);
+                            $scope.addLayer = function () {
+                // Remove any query string from the server URL
+                var baseUrl = $scope.selectedServer;
+                var qPos = baseUrl.indexOf('?');
+                if (qPos >= 0) baseUrl = baseUrl.substring(0, qPos);
 
-                    MapService.add(layer).then(function (data) {
-                        $scope.$close();
-                    }).catch(function (err) {
-                        $scope.warning = err;
-                    })
+                // Build a proper WMS GetMap request (EPSG:3857 is a safe default)
+                var getMapUrl = baseUrl +
+                    (baseUrl.indexOf('?') >= 0 ? '&' : '?') +
+                    'service=WMS&request=GetMap' +
+                    '&layers=' + encodeURIComponent($scope.selectedLayer.name) +
+                    '&crs=EPSG:3857' +
+                    '&format=image%2Fpng' +
+                    '&transparent=true';
+
+                // Proxy the final URL
+                var proxyUrl = $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(getMapUrl);
+
+                // Create the layer object expected by MapService
+                var layer = {
+                    url: proxyUrl,
+                    layertype: 'wms',
+                    name: $scope.selectedLayer.name,
+                    title: $scope.selectedLayer.title,
+                    version: $scope.selectedLayer.version,
+                    legendurl: $scope.selectedLayer.legendurl
+                };
+
+                MapService.add(layer).then(function () {
+                    $scope.$close();
+                }).catch(function (err) {
+                    $scope.warning = err;
+                });
+            };
                 };
 
                 $scope.addLayerFromGetMapRequest = function () {

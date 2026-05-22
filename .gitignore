@@ -10,6 +10,7 @@ out/
 .project
 .settings
 .classpath
+.vscode/
 /node_modules/
 /grails-app/assets/node_modules/
 /grails-app/assets/node_modules/

@@ -114,6 +114,15 @@
                                 }
                             }
 
+                            // Extract plain text from an X2JS node that may be a string,
+                            // a { __text: '...' } object, or a { __cdata: '...' } object
+                            // (ArcGIS WMS servers wrap all element content in CDATA).
+                            function textOf(val) {
+                                if (typeof val === 'string') return val.trim();
+                                if (val && typeof val === 'object') return ((val.__text || val.__cdata) + '').trim();
+                                return '';
+                            }
+
                             function getStyleName(lyr) {
                                 if (!lyr) return '';
                                 var styleKey = Object.keys(lyr).find(function (k) { return k.toLowerCase() === 'style'; });
@@ -124,7 +133,7 @@
                                 var nameKey = Object.keys(firstStyle).find(function (k) { return k.toLowerCase() === 'name'; });
                                 if (!nameKey) return '';
                                 var nameVal = firstStyle[nameKey];
-                                var styleName = typeof nameVal === 'string' ? nameVal : (nameVal && nameVal.__text) || '';
+                                var styleName = textOf(nameVal);
                                 // Treat 'default' as empty — equivalent to omitting STYLES in WMS spec
                                 return styleName.toLowerCase() === 'default' ? '' : styleName;
                             }
@@ -151,6 +160,18 @@
                                 return $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(res);
                             }
 
+                            // Fallback legend URL via GetLegendGraphic (used when the server
+                            // does not provide an explicit <LegendURL> in GetCapabilities).
+                            function getDefaultLegendUrl(layerName) {
+                                var base = $scope.selectedServer;
+                                var qPos = base.indexOf('?');
+                                if (qPos >= 0) base = base.substring(0, qPos);
+                                var legendGraphicUrl = base + '?SERVICE=WMS&REQUEST=GetLegendGraphic&FORMAT=image%2Fpng&LAYER=' +
+                                    encodeURIComponent(layerName) +
+                                    (version ? '&VERSION=' + encodeURIComponent(version) : '');
+                                return $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(legendGraphicUrl);
+                            }
+
                             function findLayers(node) {
                                 if (!node) return;
 
@@ -163,7 +184,8 @@
                                         var nameKey = Object.keys(lyr).find(function (k) { return k.toLowerCase() === 'name'; });
                                         if (nameKey) {
                                             var nameVal = lyr[nameKey];
-                                            var name = typeof nameVal === 'string' ? nameVal : (nameVal.__text || nameVal.toString());
+                                            var name = textOf(nameVal);
+                                            if (!name) { findLayers(lyr); continue; }
 
                                             // Prevent duplicates
                                             var exists = false;
@@ -179,7 +201,7 @@
                                                 var title = name;
                                                 if (titleKey) {
                                                     var titleVal = lyr[titleKey];
-                                                    title = typeof titleVal === 'string' ? titleVal : (titleVal ? (titleVal.__text || titleVal.toString()) : name);
+                                                    title = textOf(titleVal) || name;
                                                 }
 
                                                 $scope.availableLayers.push({
@@ -188,7 +210,7 @@
                                                     title: title,
                                                     version: version,
                                                     style: getStyleName(lyr),
-                                                    legendurl: getLegendUrl(lyr)
+                                                    legendurl: getLegendUrl(lyr) || getDefaultLegendUrl(name)
                                                 });
                                             }
                                         }

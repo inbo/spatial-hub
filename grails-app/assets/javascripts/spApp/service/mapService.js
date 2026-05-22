@@ -473,6 +473,7 @@
                                 opacity: 1.0,
                                 layerParams: {
                                     layers: id.name,
+                                    styles: id.style || '',
                                     format: 'image/png',
                                     transparent: true
                                 }

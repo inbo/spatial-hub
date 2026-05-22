@@ -114,6 +114,21 @@
                                 }
                             }
 
+                            function getStyleName(lyr) {
+                                if (!lyr) return '';
+                                var styleKey = Object.keys(lyr).find(function (k) { return k.toLowerCase() === 'style'; });
+                                if (!styleKey) return '';
+                                var styles = lyr[styleKey];
+                                var firstStyle = Array.isArray(styles) ? styles[0] : styles;
+                                if (!firstStyle) return '';
+                                var nameKey = Object.keys(firstStyle).find(function (k) { return k.toLowerCase() === 'name'; });
+                                if (!nameKey) return '';
+                                var nameVal = firstStyle[nameKey];
+                                var styleName = typeof nameVal === 'string' ? nameVal : (nameVal && nameVal.__text) || '';
+                                // Treat 'default' as empty — equivalent to omitting STYLES in WMS spec
+                                return styleName.toLowerCase() === 'default' ? '' : styleName;
+                            }
+
                             function getLegendUrl(lyr) {
                                 if (!lyr) return '';
                                 var styleKey = Object.keys(lyr).find(function (k) { return k.toLowerCase() === 'style'; });
@@ -172,6 +187,7 @@
                                                     name: name,
                                                     title: title,
                                                     version: version,
+                                                    style: getStyleName(lyr),
                                                     legendurl: getLegendUrl(lyr)
                                                 });
                                             }
@@ -204,30 +220,33 @@
 
                 };
 
+                $scope.addLayer = function () {
+                    // Build a clean base WMS endpoint (no GetMap query). Leaflet will add the required parameters (layers, CRS, BBOX, etc.)
+                    var baseUrl = $scope.selectedServer;
+                    var qPos = baseUrl.indexOf('?');
+                    if (qPos >= 0) baseUrl = baseUrl.substring(0, qPos);
 
-                // Build a clean base WMS endpoint (no GetMap query). Leaflet will add the required parameters (layers, CRS, BBOX, etc.)
-                var baseUrl = $scope.selectedServer;
-                var qPos = baseUrl.indexOf('?');
-                if (qPos >= 0) baseUrl = baseUrl.substring(0, qPos);
+                    // Proxy the base URL – no GetMap query attached
+                    var proxyUrl = $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(baseUrl);
 
-                // Proxy the base URL – no GetMap query attached
-                var proxyUrl = $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(baseUrl);
+                    // Create the layer object expected by MapService. Leaflet will turn this into tiled WMS requests.
+                    var layer = {
+                        url: proxyUrl,
+                        layertype: 'wms',
+                        name: $scope.selectedLayer.name,
+                        displayname: $scope.selectedLayer.displayname,
+                        title: $scope.selectedLayer.title,
+                        version: $scope.selectedLayer.version,
+                        style: $scope.selectedLayer.style,
+                        legendurl: $scope.selectedLayer.legendurl
+                    };
 
-                // Create the layer object expected by MapService. Leaflet will turn this into tiled WMS requests.
-                var layer = {
-                    url: proxyUrl,
-                    layertype: 'wms',
-                    name: $scope.selectedLayer.name,
-                    title: $scope.selectedLayer.title,
-                    version: $scope.selectedLayer.version,
-                    legendurl: $scope.selectedLayer.legendurl
+                    MapService.add(layer).then(function () {
+                        $scope.$close();
+                    }).catch(function (err) {
+                        $scope.warning = err;
+                    });
                 };
-
-                MapService.add(layer).then(function () {
-                    $scope.$close();
-                }).catch(function (err) {
-                    $scope.warning = err;
-                });
 
                 $scope.addLayerFromGetMapRequest = function () {
                     //parsing

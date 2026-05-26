@@ -133,9 +133,7 @@
                                 var nameKey = Object.keys(firstStyle).find(function (k) { return k.toLowerCase() === 'name'; });
                                 if (!nameKey) return '';
                                 var nameVal = firstStyle[nameKey];
-                                var styleName = textOf(nameVal);
-                                // Treat 'default' as empty — equivalent to omitting STYLES in WMS spec
-                                return styleName.toLowerCase() === 'default' ? '' : styleName;
+                                return textOf(nameVal);
                             }
 
                             function getLegendUrl(lyr) {

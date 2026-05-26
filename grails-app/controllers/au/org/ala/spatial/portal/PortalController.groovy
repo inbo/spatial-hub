@@ -574,7 +574,8 @@ class PortalController {
                     }
                 } else {
                     def headers = [:]
-                    request.headerNames.each { name -> headers.put(name, request.getHeader(name)) }
+                    // request.headerNames.each { name -> headers.put(name, request.getHeader(name)) }
+                    
 
                     value = hubWebService.getUrlMap(target, headers)
                     if (value) {

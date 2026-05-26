@@ -41,7 +41,7 @@
                     $scope.warning = '';
                     $scope.loading = true;
 
-                    var urlFinal = $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent(url)
+                    var urlFinal = url
 
                     $http.get(urlFinal, $scope._httpDescription('proxyGetCapabilities'))
                         .success(function (resp) {
@@ -157,7 +157,7 @@
                                 var res = onlineResource['xlink:href'] || onlineResource.href || onlineResource['href'] || '';
                                 if (!res) return '';
                                 res = safeDecode(res).replace(':4443/', '/');
-                                return $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(res);
+                                return res;
                             }
 
                             // Fallback legend URL via GetLegendGraphic (used when the server
@@ -169,7 +169,7 @@
                                 var legendGraphicUrl = base + '?SERVICE=WMS&REQUEST=GetLegendGraphic&FORMAT=image%2Fpng&LAYER=' +
                                     encodeURIComponent(layerName) +
                                     (version ? '&VERSION=' + encodeURIComponent(version) : '');
-                                return $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(legendGraphicUrl);
+                                return legendGraphicUrl;
                             }
 
                             function findLayers(node) {
@@ -249,7 +249,7 @@
                     if (qPos >= 0) baseUrl = baseUrl.substring(0, qPos);
 
                     // Proxy the base URL – no GetMap query attached
-                    var proxyUrl = $SH.baseUrl + '/portal/proxy?url=' + encodeURIComponent(baseUrl);
+                    var proxyUrl = baseUrl;
 
                     // Create the layer object expected by MapService. Leaflet will turn this into tiled WMS requests.
                     var layer = {
@@ -311,13 +311,13 @@
                     }
 
                     var layer = {
-                        url: $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent(result.URL),
+                        url: result.URL,
                         type: 'wms',
                         layertype: 'wms',
                         version: result.VERSION,
                         name: result.LAYERS,
                         // legend url here is not valid for all
-                        legendurl: $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent($scope.selectedGetMapExample.replace("GetMap", "GetLegendGraphic").replace("LAYERS=", "LAYER="))
+                        legendurl: $scope.selectedGetMapExample.replace("GetMap", "GetLegendGraphic").replace("LAYERS=", "LAYER=")
                     };
 
                     MapService.add(layer).then(function (data) {

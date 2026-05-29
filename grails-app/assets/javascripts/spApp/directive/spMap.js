@@ -39,6 +39,10 @@
                         return scope.addLayer(layerId);
                     }
 
+                    scope.openAddWMS = function() {
+                        LayoutService.openModal('addWMS');
+                    }
+
                     scope.addLayer = function (layerId) {
                         var promises = [];
                         var item = LayersService.convertFieldIdToMapLayer(layerId, true)

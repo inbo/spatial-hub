@@ -40,9 +40,9 @@
                     $scope.warning = '';
                     $scope.loading = true;
 
-                    var urlFinal = $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent(url)
+                    var urlFinal = url
 
-                    $http.get(urlFinal, $scope._httpDescription('proxyGetCapabilities'))
+                    $http.get(urlFinal, $scope._httpDescription('getCapabilities'))
                         .success(function (resp) {
                             $scope.availableLayers = [];
                             var x2js = new X2JS({attributePrefix: []});
@@ -60,7 +60,7 @@
                                         legendurl = styles.LegendURL.OnlineResource['xlink:href'];
                                     }
 
-                                    legendurl = $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent(legendurl)
+                                    legendurl = legendurl
 
                                     $scope.availableLayers.push({
                                         displayname: layers[i].Name,
@@ -80,7 +80,7 @@
                                                 legendurl = styles.LegendURL.OnlineResource['xlink:href'];
                                             }
 
-                                            legendurl = $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent(legendurl)
+                                            legendurl = legendurl
 
                                             $scope.availableLayers.push({
                                                 displayname: layers[i].Layer[k].Name,
@@ -98,7 +98,6 @@
                         .error(function (resp) {
                             if (resp.error) {
                                 $scope.warning = resp.error;
-                                $scope.warning += '[' + url + ' may not in proxy list!]'
                             } else
                                 $scope.warning = resp;
 
@@ -114,8 +113,7 @@
                     var len = $scope.selectedServer.lastIndexOf('?')
                     if (len < 0) len = $scope.selectedServer.length()
                     var serverUrl = $scope.selectedServer.substr(0, len);
-                    var proxyUrl = $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent(serverUrl);
-                    var layer = Object.assign({url: proxyUrl, layertype: "wms"}, $scope.selectedLayer);
+                    var layer = Object.assign({url: serverUrl, layertype: "wms"}, $scope.selectedLayer);
 
                     MapService.add(layer).then(function (data) {
                         //layer added successfully
@@ -171,7 +169,7 @@
                         version: result.VERSION,
                         name: result.LAYERS,
                         // legend url here is not valid for all
-                        legendurl: $SH.baseUrl + "/portal/proxy?url=" + encodeURIComponent($scope.selectedGetMapExample.replace("GetMap", "GetLegendGraphic").replace("LAYERS=", "LAYER="))
+                        legendurl: $scope.selectedGetMapExample.replace("GetMap", "GetLegendGraphic").replace("LAYERS=", "LAYER=")
                     };
 
                     MapService.add(layer).then(function (data) {

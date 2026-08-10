@@ -366,6 +366,8 @@ startup:
             exportType: 'normal'
             link: 'https://www.google.com/intl/en_au/help/terms_maps.html'
             projections: ['3857']
+            layerParams:
+                attribution: '&copy; Google'
         google_hybrid:
             name: 'Hybrid'
             layerType: 'HYBRID'
@@ -373,6 +375,8 @@ startup:
             exportType: 'hybrid'
             link: 'https://www.google.com/intl/en_au/help/terms_maps.html'
             projections: ['3857']
+            layerParams:
+                attribution: '&copy; Google'
         outline:
             name: 'Outline'
             type: 'wms'
@@ -381,6 +385,7 @@ startup:
                 layers: 'ALA:world'
                 format: 'image/png'
                 continuousWorld: true
+                attribution: 'Atlas of Living Australia'
             exportType: 'outline'
 #        osm_projection:
 #            name: 'Open Street Map'
@@ -411,6 +416,8 @@ startup:
             exportType: 'satellite'
             link: 'https://www.google.com/intl/en_au/help/terms_maps.html'
             projections: ['3857']
+            layerParams:
+                attribution: '&copy; Google'
 
 defaultareas:
     - name: 'Australia'

@@ -7,7 +7,7 @@
      * @description
      *    General map option controls
      */
-    angular.module('sp-options-directive', ['map-service'])
+    angular.module('sp-options-directive', ['map-service', 'ngSanitize'])
         .directive('spOptions', ['$timeout', 'MapService', 'LayoutService',
             function ($timeout, MapService, LayoutService) {
 
@@ -31,7 +31,12 @@
                                 name: v.name,
                                 url: v.link,
                                 projections: v.projections,
-                                invalidProjections: v.invalidProjections
+                                invalidProjections: v.invalidProjections,
+                                attribution: (v.layerParams && $.isArray(v.layerParams.layers))
+                                    ? $.map(v.layerParams.layers, function (layer) {
+                                        return (layer.layerParams && layer.layerParams.attribution) || null;
+                                    }).join('<br>')
+                                    : (v.layerParams && v.layerParams.attribution) || ''
                             })
                         });
 

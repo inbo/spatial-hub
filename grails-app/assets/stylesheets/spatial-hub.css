@@ -1130,3 +1130,7 @@ ul.errors {
     background-color: #000000;
     border-width: 0;
 }
+
+.baselayer-attribution {
+  font-size: 0.8em
+}

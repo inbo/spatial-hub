@@ -88,6 +88,17 @@
                             scope.updateDist();
                         };
 
+                        scope.selectAll = function () {
+                            for (var i = 0; i < scope.layers.length && scope._selection.layers.length < scope._maxCount; i++) {
+                                if (!scope.layers[i].selected) {
+                                    scope.layers[i].selected = true;
+                                    scope._selection.layers.push(scope.layers[i]);
+                                }
+                            }
+                            scope.updateDist();
+                            scope.updateExportSet();
+                        };
+
                         scope.setLayers = function (data) {
                             for (var i = 0; i < data.length; i++) {
                                 if (((scope._environmental && data[i].layer.type.toLowerCase() === 'environmental') ||

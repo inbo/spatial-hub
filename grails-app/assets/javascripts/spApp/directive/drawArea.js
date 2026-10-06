@@ -149,18 +149,41 @@
                                 scope.q = scope.selectedArea.q;
                                 if (scope.selectedArea.wkt !== undefined && scope.selectedArea.wkt.length > 0) {
                                     LayersService.createFromWkt(scope.selectedArea.wkt, scope.areaName, '').then(function (data) {
-                                        LoggerService.log("Create", scope.type, {pid: data.data.id, wkt: ''})
-                                        LayersService.getObject(data.data.id).then(function (data) {
-                                            LayersService.getWkt(data.data.id).then(function (wkt) {
-                                                data.data.layertype = 'area';
-                                                data.data.wkt = wkt.data;
-                                                MapService.add(data.data);
+                                        if (!data.data.id) {
+                                            scope.loading = false;
+                                            if (data.data.error) {
+                                                bootbox.alert(data.data.error)
+                                            } else {
+                                                bootbox.alert($i18n(540, "An error occurred. Please try again and if the same error occurs, send an email to support@ala.org.au and include the URL to this page, the error message and what steps you performed that triggered this error."));
+                                            }
+                                        } else {
+                                            LoggerService.log("Create", scope.type, {pid: data.data.id, wkt: ''})
+                                            LayersService.getObject(data.data.id).then(function (data) {
+                                                LayersService.getWkt(data.data.id).then(function (wkt) {
+                                                    data.data.layertype = 'area';
+                                                    data.data.wkt = wkt.data;
+                                                    MapService.add(data.data);
 
-                                                scope.deleteDrawing();
-                                                LayoutService.closePanel();
-                                                MapService.zoomToExtents(data.data.bbox);
+                                                    scope.deleteDrawing();
+                                                    LayoutService.closePanel();
+                                                    MapService.zoomToExtents(data.data.bbox);
+                                                })
+                                            }, function (error) {
+                                                scope.loading = false;
+                                                if (error && error.data && error.data.error) {
+                                                    bootbox.alert("Error:" + error.data.error);
+                                                } else {
+                                                    bootbox.alert($i18n(540, "An error occurred. Please try again and if the same error occurs, send an email to support@ala.org.au and include the URL to this page, the error message and what steps you performed that triggered this error."));
+                                                }
                                             })
-                                        })
+                                        }
+                                    }, function (error) {
+                                        scope.loading = false;
+                                        if (error && error.data && error.data.error) {
+                                            bootbox.alert("Error:" + error.data.error);
+                                        } else {
+                                            bootbox.alert($i18n(540, "An error occurred. Please try again and if the same error occurs, send an email to support@ala.org.au and include the URL to this page, the error message and what steps you performed that triggered this error."));
+                                        }
                                     })
                                 }
                             }
